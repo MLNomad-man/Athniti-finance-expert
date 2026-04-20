@@ -1,0 +1,50 @@
+{
+  "name": "algohack-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.0",
+    "npm": ">=9.0"
+  },
+  "devDependencies": {
+    "@algorandfoundation/algokit-client-generator": "^5.0.0",
+    "@types/node": "^18.17.14",
+    "@types/react": "^18.2.11",
+    "@types/react-dom": "^18.2.4",
+    "@typescript-eslint/eslint-plugin": "^7.0.2",
+    "@typescript-eslint/parser": "^7.0.2",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.24",
+    "tailwindcss": "3.3.2",
+    "typescript": "^5.1.6",
+    "vite": "^5.0.0",
+    "vite-plugin-node-polyfills": "^0.22.0"
+  },
+  "dependencies": {
+    "@algorandfoundation/algokit-utils": "^9.0.0",
+    "@blockshake/defly-connect": "^1.2.1",
+    "@perawallet/connect": "^1.4.1",
+    "@txnlab/use-wallet": "^4.0.0",
+    "@txnlab/use-wallet-react": "^4.0.0",
+    "algosdk": "^3.0.0",
+    "assert": "^2.1.0",
+    "daisyui": "^4.0.0",
+    "lightweight-charts": "^5.1.0",
+    "lucide-react": "^0.576.0",
+    "lute-connect": "^1.6.2",
+    "notistack": "^3.0.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tslib": "^2.6.2"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "overrides": {
+    "ws@>7.0.0 <7.5.9": "7.5.10"
+  }
+}

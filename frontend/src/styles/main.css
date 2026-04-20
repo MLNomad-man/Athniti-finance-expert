@@ -1,0 +1,379 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+.theme-dark {
+  --surface-tint: 0 226 144;
+  --on-background: 224 226 234;
+  --secondary: 188 199 222;
+  --error: 255 180 171;
+  --on-primary-container: 0 113 70;
+  --tertiary-fixed-dim: 210 187 255;
+  --surface-dim: 16 20 25;
+  --surface-container-lowest: 10 14 19;
+  --on-secondary: 38 49 67;
+  --primary-fixed-dim: 0 226 144;
+  --on-tertiary-container: 120 52 233;
+  --inverse-surface: 224 226 234;
+  --on-primary-fixed-variant: 0 82 49;
+  --secondary-fixed-dim: 188 199 222;
+  --surface-container-low: 24 28 33;
+  --error-container: 147 0 10;
+  --primary-container: 0 255 163;
+  --outline-variant: 58 74 63;
+  --on-secondary-fixed-variant: 60 71 90;
+  --surface-container-highest: 49 53 59;
+  --on-surface-variant: 185 203 189;
+  --surface-container: 28 32 37;
+  --background: 16 20 25;
+  --primary-fixed: 82 255 172;
+  --on-surface: 224 226 234;
+  --on-tertiary-fixed: 37 0 90;
+  --surface-container-high: 38 42 48;
+  --inverse-primary: 0 109 67;
+  --primary: 245 255 245;
+  --tertiary: 255 251 255;
+  --on-secondary-fixed: 17 28 45;
+  --secondary-container: 62 73 93;
+  --tertiary-container: 232 217 255;
+  --on-error-container: 255 218 214;
+  --on-primary-fixed: 0 33 17;
+  --surface: 16 20 25;
+  --on-tertiary: 63 0 142;
+  --on-error: 105 0 5;
+  --surface-variant: 49 53 59;
+  --secondary-fixed: 216 227 251;
+  --outline: 132 149 136;
+  --on-primary: 0 57 32;
+  --on-tertiary-fixed-variant: 90 0 198;
+  --tertiary-fixed: 234 221 255;
+  --on-secondary-container: 174 185 208;
+  --surface-bright: 54 57 63;
+  --inverse-on-surface: 45 49 54;
+}
+
+.theme-light {
+  --surface-tint: 0 109 67;
+  --on-background: 28 32 37;
+  --secondary: 60 71 90;
+  --error: 176 0 32;
+  --on-primary-container: 255 255 255;
+  --tertiary-fixed-dim: 120 52 233;
+  --surface-dim: 224 226 234;
+  --surface-container-lowest: 255 255 255;
+  --on-secondary: 255 255 255;
+  --primary-fixed-dim: 0 109 67;
+  --on-tertiary-container: 255 255 255;
+  --inverse-surface: 45 49 54;
+  --on-primary-fixed-variant: 255 255 255;
+  --secondary-fixed-dim: 174 185 208;
+  --surface-container-low: 245 247 250;
+  --error-container: 255 218 214;
+  --primary-container: 0 109 67;
+  --outline-variant: 200 210 204;
+  --on-secondary-fixed-variant: 255 255 255;
+  --surface-container-highest: 236 240 245;
+  --on-surface-variant: 69 79 74;
+  --surface-container: 240 244 248;
+  --background: 249 251 254;
+  --primary-fixed: 0 109 67;
+  --on-surface: 28 32 37;
+  --on-tertiary-fixed: 255 255 255;
+  --surface-container-high: 228 233 240;
+  --inverse-primary: 82 255 172;
+  --primary: 0 57 32;
+  --tertiary: 63 0 142;
+  --on-secondary-fixed: 255 255 255;
+  --secondary-container: 188 199 222;
+  --tertiary-container: 232 217 255;
+  --on-error-container: 65 0 2;
+  --on-primary-fixed: 255 255 255;
+  --surface: 249 251 254;
+  --on-tertiary: 255 255 255;
+  --on-error: 255 255 255;
+  --surface-variant: 220 226 233;
+  --secondary-fixed: 188 199 222;
+  --outline: 107 120 114;
+  --on-primary: 255 255 255;
+  --on-tertiary-fixed-variant: 255 255 255;
+  --tertiary-fixed: 120 52 233;
+  --on-secondary-container: 38 49 67;
+  --surface-bright: 255 255 255;
+  --inverse-on-surface: 237 241 246;
+}
+
+/* ========================================
+   ALGOHACK DASHBOARD — PredX-Inspired Styles
+   ======================================== */
+
+/* ---------- Glass Panel ---------- */
+.glass-panel {
+  background: rgb(var(--background) / 0.6);
+  backdrop-filter: blur(20px);
+}
+
+/* ---------- Neon Glow ---------- */
+.neon-glow {
+  box-shadow: 0 0 20px rgba(0, 255, 163, 0.15);
+}
+
+.neon-glow-strong {
+  box-shadow: 0 0 30px rgba(0, 255, 163, 0.25);
+}
+
+/* ---------- Pulse Dot ---------- */
+.pulse-dot {
+  animation: pulse-anim 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-anim {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .5; transform: scale(1.2); }
+}
+
+/* ---------- Card Hover Effects ---------- */
+.dashboard-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(0, 255, 163, 0.03) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.dashboard-card:hover::before {
+  opacity: 1;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 255, 163, 0.08);
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar-link {
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.sidebar-link:hover {
+  background: rgb(var(--surface-container-high));
+}
+
+.sidebar-link.active {
+  background: rgb(var(--surface-container-highest));
+  color: rgb(var(--primary-container));
+  border-radius: 9999px;
+}
+
+.sidebar-link.active .material-symbols-outlined {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* ---------- Shine Sweep on header button ---------- */
+.btn-neon {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-neon:hover {
+  box-shadow: 0 0 20px rgba(0, 255, 163, 0.4);
+}
+
+.btn-neon::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transform: skewX(-20deg);
+  transition: none;
+}
+
+.btn-neon:hover::after {
+  animation: btn-sweep 0.6s ease forwards;
+}
+
+@keyframes btn-sweep {
+  0% { left: -100%; }
+  100% { left: 150%; }
+}
+
+/* ---------- Fade in animations ---------- */
+.fade-in {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: fade-in-up 0.5s ease forwards;
+}
+
+.fade-in-delay-1 { animation-delay: 0.1s; }
+.fade-in-delay-2 { animation-delay: 0.2s; }
+.fade-in-delay-3 { animation-delay: 0.3s; }
+.fade-in-delay-4 { animation-delay: 0.4s; }
+.fade-in-delay-5 { animation-delay: 0.5s; }
+.fade-in-delay-6 { animation-delay: 0.6s; }
+
+@keyframes fade-in-up {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Dark Modal Overrides ---------- */
+.modal-box {
+  background-color: rgb(var(--surface-container)) !important;
+  border: 1px solid rgb(var(--outline-variant) / 0.3);
+  color: rgb(var(--on-surface));
+}
+
+.modal-backdrop,
+.modal {
+  background-color: rgb(var(--background) / 0.8) !important;
+}
+
+.input, .file-input, .select, .textarea {
+  background-color: rgb(var(--surface-container-high)) !important;
+  border-color: rgb(var(--outline-variant)) !important;
+  color: rgb(var(--on-surface)) !important;
+}
+
+.input::placeholder, .textarea::placeholder {
+  color: rgb(var(--outline)) !important;
+}
+
+.input:focus, .file-input:focus, .select:focus, .textarea:focus {
+  border-color: rgb(var(--primary-container)) !important;
+  box-shadow: 0 0 0 2px rgba(0, 255, 163, 0.1) !important;
+}
+
+/* ---------- Alert overrides ---------- */
+.alert-info {
+  background-color: rgba(0, 255, 163, 0.08) !important;
+  border-color: rgba(0, 255, 163, 0.2) !important;
+  color: rgb(var(--primary-container)) !important;
+}
+
+/* ---------- Divider ---------- */
+.divider {
+  color: rgb(var(--outline)) !important;
+}
+
+.divider::before, .divider::after {
+  background-color: rgb(var(--outline-variant)) !important;
+}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--background));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--surface-container-highest));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--outline-variant));
+}
+
+/* ---------- Material Symbols ---------- */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ========================================
+   TRADING SECTION STYLES
+   ======================================== */
+
+/* ---------- Ticker Ribbon ---------- */
+.ticker-ribbon {
+  animation: ticker-scroll 30s linear infinite;
+  width: max-content;
+}
+
+.ticker-ribbon:hover {
+  animation-play-state: paused;
+}
+
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ---------- Trading Card Hover ---------- */
+.trade-row {
+  transition: all 0.15s ease;
+}
+
+.trade-row:hover {
+  background: rgb(var(--surface-container-high) / 0.5);
+}
+
+/* ---------- Chart container ---------- */
+.tv-lightweight-charts {
+  border-radius: 0 0 12px 12px;
+}
+
+/* ---------- Order button pulse ---------- */
+.order-btn-buy {
+  transition: all 0.3s ease;
+}
+.order-btn-buy:hover {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+}
+.order-btn-sell {
+  transition: all 0.3s ease;
+}
+.order-btn-sell:hover {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.35);
+}
+
+/* ---------- Custom scrollbar for trading tables ---------- */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(var(--surface-container-highest));
+  border-radius: 2px;
+}
+
+/* ---------- Skeleton loading shimmer ---------- */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--surface-container-low)) 25%,
+    rgb(var(--surface-container-high)) 50%,
+    rgb(var(--surface-container-low)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

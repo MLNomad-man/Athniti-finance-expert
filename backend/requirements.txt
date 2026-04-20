@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pydantic
+python-multipart
+torch
+transformers
+safetensors
+pandas
+matplotlib
+reportlab
+scikit-learn
+google-generativeai
+python-dotenv
+requests
+accelerate

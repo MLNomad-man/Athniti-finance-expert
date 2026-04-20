@@ -1,0 +1,79 @@
+{
+  "tracks": [
+    {
+      "sector": "Budgeting & Cash Flow",
+      "description": "Build monthly budget discipline, improve savings rate, and avoid cash crunch cycles.",
+      "channelHint": "Khan Academy, Two Cents, CA Rachana Ranade",
+      "videos": [
+        {
+          "title": "Budgeting Basics for Beginners",
+          "url": "https://www.youtube.com/watch?v=HQzoZfc3GwQ"
+        },
+        {
+          "title": "How to Build a Monthly Budget",
+          "url": "https://www.youtube.com/watch?v=7L4xQv4fN8A"
+        }
+      ]
+    },
+    {
+      "sector": "Debt Management",
+      "description": "Learn debt avalanche/snowball payoff methods and how to reduce loan interest burden.",
+      "channelHint": "The Financial Diet, Dave Ramsey clips, Pranjal Kamra",
+      "videos": [
+        {
+          "title": "Debt Avalanche vs Debt Snowball",
+          "url": "https://www.youtube.com/watch?v=PvEUj_mRfIo"
+        },
+        {
+          "title": "How to Pay Off Debt Faster",
+          "url": "https://www.youtube.com/watch?v=E4M8_6_B4Xc"
+        }
+      ]
+    },
+    {
+      "sector": "Investing Fundamentals",
+      "description": "Understand asset allocation, SIP investing, risk, and compounding for long-term wealth.",
+      "channelHint": "Zerodha Varsity, ET Money, Groww",
+      "videos": [
+        {
+          "title": "Asset Allocation Explained",
+          "url": "https://www.youtube.com/watch?v=gvZSpET11ZY"
+        },
+        {
+          "title": "SIP Investing Basics",
+          "url": "https://www.youtube.com/watch?v=QvK7J7Xwq9A"
+        }
+      ]
+    },
+    {
+      "sector": "Tax Planning",
+      "description": "Understand deductions, tax regimes, and year-round tax planning templates.",
+      "channelHint": "CA channels, ClearTax, Tax2win",
+      "videos": [
+        {
+          "title": "Income Tax Planning Basics (India)",
+          "url": "https://www.youtube.com/watch?v=8QPR5f4MZ5M"
+        },
+        {
+          "title": "Old vs New Tax Regime Explained",
+          "url": "https://www.youtube.com/watch?v=9dB8fR2qJkY"
+        }
+      ]
+    },
+    {
+      "sector": "Insurance & Protection",
+      "description": "Choose term/life/health insurance smartly and avoid common under-insurance mistakes.",
+      "channelHint": "Labour Law Advisor, Ankur Warikoo, Policy educators",
+      "videos": [
+        {
+          "title": "Term Insurance Explained",
+          "url": "https://www.youtube.com/watch?v=7Q4w7hG2F8Q"
+        },
+        {
+          "title": "Health Insurance Basics",
+          "url": "https://www.youtube.com/watch?v=8mP3Y4T9k4I"
+        }
+      ]
+    }
+  ]
+}
