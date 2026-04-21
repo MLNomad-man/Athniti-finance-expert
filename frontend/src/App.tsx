@@ -6,9 +6,9 @@ import AppRouter from './pages/AppRouter'
 
 const supportedWallets: SupportedWallet[] = [
   { id: WalletId.DEFLY },
-  { id: WalletId.PERA },
+  { id: WalletId.PERA, options: { compactMode: true } },
   { id: WalletId.EXODUS },
-  { id: WalletId.LUTE },
+  { id: WalletId.LUTE, options: { siteName: 'Arthniti' } },
 ]
 
 const walletManager = new WalletManager({
