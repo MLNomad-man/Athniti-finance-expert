@@ -1,15 +1,9 @@
 import { useWallet } from '@txnlab/use-wallet-react'
-import { useMemo } from 'react'
 import { ellipseAddress } from '../utils/ellipseAddress'
-import { getAlgodConfigFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
 
 const Account = () => {
   const { activeAddress } = useWallet()
-  const algoConfig = getAlgodConfigFromViteEnvironment()
-
-  const networkName = useMemo(() => {
-    return algoConfig.network === '' ? 'localnet' : algoConfig.network.toLocaleLowerCase()
-  }, [algoConfig.network])
+  const networkName = 'testnet';
 
   return (
     <div className="bg-surface-high rounded-xl p-4 border border-accent-green/20">
