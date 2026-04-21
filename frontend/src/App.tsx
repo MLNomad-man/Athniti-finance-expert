@@ -13,19 +13,7 @@ const supportedWallets: SupportedWallet[] = [
 
 const walletManager = new WalletManager({
   wallets: supportedWallets,
-  defaultNetwork: NetworkId.TESTNET,
-  networks: {
-    [NetworkId.TESTNET]: {
-      algod: {
-        baseServer: import.meta.env.VITE_ALGOD_SERVER || 'https://testnet-api.algonode.cloud',
-        port: import.meta.env.VITE_ALGOD_PORT || '443',
-        token: import.meta.env.VITE_ALGOD_TOKEN || '',
-      },
-    },
-  },
-  options: {
-    resetNetwork: true,
-  },
+  network: NetworkId.TESTNET,
 })
 
 export default function App() {
