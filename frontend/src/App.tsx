@@ -1,42 +1,25 @@
-import { SupportedWallet, WalletId, WalletManager, WalletProvider } from '@txnlab/use-wallet-react'
+import { SupportedWallet, WalletId, WalletManager, WalletProvider, NetworkId } from '@txnlab/use-wallet-react'
 import { SnackbarProvider, closeSnackbar } from 'notistack'
-import { getAlgodConfigFromViteEnvironment, getKmdConfigFromViteEnvironment } from './utils/network/getAlgoClientConfigs'
 import { PredXProvider } from './context/PredXContext'
 import { AnalysisProvider } from './context/AnalysisContext'
 import AppRouter from './pages/AppRouter'
 
-let supportedWallets: SupportedWallet[]
-if (import.meta.env.VITE_ALGOD_NETWORK === 'localnet') {
-  const kmdConfig = getKmdConfigFromViteEnvironment()
-  supportedWallets = [
-    {
-      id: WalletId.KMD,
-      options: {
-        baseServer: kmdConfig.server,
-        token: String(kmdConfig.token),
-        port: String(kmdConfig.port),
-      },
-    },
-  ]
-} else {
-  supportedWallets = [
-    { id: WalletId.DEFLY },
-    { id: WalletId.PERA },
-    { id: WalletId.EXODUS },
-    { id: WalletId.LUTE },
-  ]
-}
+const supportedWallets: SupportedWallet[] = [
+  { id: WalletId.DEFLY },
+  { id: WalletId.PERA },
+  { id: WalletId.EXODUS },
+  { id: WalletId.LUTE },
+]
 
-const algodConfig = getAlgodConfigFromViteEnvironment()
 const walletManager = new WalletManager({
   wallets: supportedWallets,
-  defaultNetwork: algodConfig.network,
+  defaultNetwork: NetworkId.TESTNET,
   networks: {
-    [algodConfig.network]: {
+    [NetworkId.TESTNET]: {
       algod: {
-        baseServer: algodConfig.server,
-        port: algodConfig.port,
-        token: String(algodConfig.token),
+        baseServer: import.meta.env.VITE_ALGOD_SERVER || 'https://testnet-api.algonode.cloud',
+        port: import.meta.env.VITE_ALGOD_PORT || '443',
+        token: import.meta.env.VITE_ALGOD_TOKEN || '',
       },
     },
   },
