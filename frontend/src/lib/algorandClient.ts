@@ -1,13 +1,15 @@
 /**
- * Shared AlgorandClient instance — reads from existing VITE_ env vars.
- * Uses @algorandfoundation/algokit-utils AlgorandClient.
+ * Shared AlgorandClient instance — hardcoded to Algorand TestNet.
  */
 import { AlgorandClient } from '@algorandfoundation/algokit-utils'
-import { getAlgodConfigFromViteEnvironment, getIndexerConfigFromViteEnvironment } from '../utils/network/getAlgoClientConfigs'
+import algosdk from 'algosdk'
 
-const algodConfig = getAlgodConfigFromViteEnvironment()
-const indexerConfig = getIndexerConfigFromViteEnvironment()
+const algodServer = import.meta.env.VITE_ALGOD_SERVER || 'https://testnet-api.algonode.cloud'
+const indexerServer = import.meta.env.VITE_INDEXER_SERVER || 'https://testnet-idx.algonode.cloud'
 
-const algorandClient = AlgorandClient.fromConfig({ algodConfig, indexerConfig })
+const algodClient = new algosdk.Algodv2('', algodServer, '')
+const indexerClient = new algosdk.Indexer('', indexerServer, '')
+
+const algorandClient = AlgorandClient.fromClients({ algod: algodClient, indexer: indexerClient })
 
 export default algorandClient
