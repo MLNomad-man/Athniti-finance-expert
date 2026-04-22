@@ -47,11 +47,19 @@ app.add_middleware(
 # -------------------------------------------------------------
 # 1. SETUP CLASSIFIER MODEL
 # -------------------------------------------------------------
-# Use relative path for deployment
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_DIR = os.path.join(BASE_DIR, "model")
+# Robust path for Hugging Face deployment or local structure 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+
+# The model folder is in the project root
+MODEL_DIR = os.path.join(PROJECT_ROOT, "model")
+if not os.path.exists(MODEL_DIR):
+    # Fallback to local BASE_DIR if running standalone
+    MODEL_DIR = BASE_DIR
+
 MODEL_WEIGHTS = os.path.join(MODEL_DIR, "model.safetensors")
 LABEL_ENCODER_PATH = os.path.join(MODEL_DIR, "label_encoder.pkl")
+
 
 print("Initializing AI Categories...")
 try:
