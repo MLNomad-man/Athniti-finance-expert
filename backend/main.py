@@ -249,7 +249,8 @@ RULES — follow strictly:
     try:
         # Try Gemini first if API key is present (best for production)
         if GEMINI_API_KEY:
-            model_gemini = genai.GenerativeModel("gemini-1.5-flash")
+            # Using models/gemini-2.5-flash because 2.0 quota is exhausted and 1.5 is deprecated
+            model_gemini = genai.GenerativeModel("models/gemini-2.5-flash")
             response = model_gemini.generate_content(prompt)
             return {"summary": sanitize_currency(response.text.strip())}
             
