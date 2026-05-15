@@ -7,7 +7,7 @@ import tempfile
 import uuid
 import socket
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -194,7 +194,7 @@ def _extract_first_json_object(text: str) -> dict:
 
 def _to_iso_date(date_text: str) -> str:
     if not date_text:
-        return datetime.utcnow().strftime("%Y-%m-%d")
+        return datetime.now(timezone.utc).strftime("%Y-%m-%d")
     clean = str(date_text).strip()
     patterns = [
         "%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%d.%m.%Y",
@@ -208,7 +208,7 @@ def _to_iso_date(date_text: str) -> str:
     match = _re.search(r"(\d{4}-\d{2}-\d{2})", clean)
     if match:
         return match.group(1)
-    return datetime.utcnow().strftime("%Y-%m-%d")
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
 def _to_amount(value: Any) -> float:
     if isinstance(value, (int, float)):
@@ -254,7 +254,7 @@ OCR text:
     groq_key = os.getenv("GROQ_API_KEY")
     if groq_key:
         try:
-            model_name = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+            model_name = os.getenv("GROQ_BILL_MODEL") or os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
             res = requests.post(
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={

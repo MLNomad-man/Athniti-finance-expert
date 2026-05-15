@@ -54,6 +54,7 @@ export default function Expenses() {
   const [scanLoading, setScanLoading] = useState(false);
   const [scanError, setScanError] = useState('');
   const [scannedBill, setScannedBill] = useState<ScannedBill | null>(null);
+  const [scanFormError, setScanFormError] = useState('');
 
   useEffect(() => { setExpenses(loadExpenses()); }, []);
 
@@ -80,6 +81,7 @@ export default function Expenses() {
     if (!file) return;
 
     setScanError('');
+    setScanFormError('');
     setScanLoading(true);
     const formData = new FormData();
     formData.append('file', file);
@@ -100,13 +102,13 @@ export default function Expenses() {
         category: String(extracted.category || 'other'),
         type: 'other',
       });
+      e.target.value = '';
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unable to scan bill';
       setScanError(message);
       setScannedBill(null);
     } finally {
       setScanLoading(false);
-      e.target.value = '';
     }
   };
 
@@ -114,7 +116,15 @@ export default function Expenses() {
     e.preventDefault();
     if (!scannedBill) return;
     const amount = Number(scannedBill.total_amount);
-    if (!scannedBill.merchant.trim() || !Number.isFinite(amount) || amount <= 0) return;
+    if (!scannedBill.merchant.trim()) {
+      setScanFormError('Merchant is required before confirming.');
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setScanFormError('Amount must be greater than 0.');
+      return;
+    }
+    setScanFormError('');
 
     const entry: ExpenseEntry = {
       id: crypto.randomUUID(),
@@ -228,6 +238,7 @@ export default function Expenses() {
                 <button type="submit" className="bg-[#2962FF] hover:bg-[#2255DD] text-white text-sm font-semibold px-5 py-2.5 rounded-xl">Confirm & Save</button>
                 <button type="button" onClick={() => setScannedBill(null)} className="bg-[#2A2F38] hover:bg-[#343B46] text-slate-200 text-sm font-semibold px-5 py-2.5 rounded-xl">Discard</button>
               </div>
+              {scanFormError && <p className="sm:col-span-2 text-xs text-[#EF4444]">{scanFormError}</p>}
             </form>
           )}
         </div>
