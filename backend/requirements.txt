@@ -15,4 +15,4 @@ requests
 accelerate
 ollama
 pytesseract==0.3.10
-Pillow==10.4.0
+Pillow==12.2.0
