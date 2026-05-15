@@ -30,6 +30,23 @@ function saveExpenses(expenses: ExpenseEntry[]) {
   localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
 }
 
+function normalizeOcrDate(input: unknown): string {
+  const today = new Date().toISOString().split('T')[0];
+  const dateText = String(input ?? '').trim();
+  if (!dateText) return today;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateText)) return dateText;
+
+  const dmyMatch = dateText.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
+  if (!dmyMatch) return today;
+
+  const day = Number(dmyMatch[1]);
+  const month = Number(dmyMatch[2]);
+  const yearValue = Number(dmyMatch[3]);
+  const year = String(yearValue < 100 ? 2000 + yearValue : yearValue);
+  if (!day || !month || month > 12 || day > 31) return today;
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
 export default function Transactions() {
   const {
     activeAddress, algoBalance, inrBalance,
@@ -71,13 +88,13 @@ export default function Transactions() {
       const merchant = String(extracted.merchant ?? extracted.description ?? '').trim();
       const amount = Number(extracted.total_amount ?? extracted.amount ?? extracted.total ?? 0);
       const rawCategory = String(extracted.category ?? 'other').toLowerCase();
-      const date = String(extracted.date ?? new Date().toISOString().split('T')[0]);
+      const date = normalizeOcrDate(extracted.date);
 
       setDraftExpense({
         description: merchant || 'Scanned bill',
         amount: Number.isFinite(amount) && amount > 0 ? amount : 0,
         category: EXPENSE_CATEGORIES.includes(rawCategory) ? rawCategory : 'other',
-        date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : new Date().toISOString().split('T')[0],
+        date,
         type: 'need',
       });
     } catch (error: any) {
@@ -91,7 +108,8 @@ export default function Transactions() {
   const handleConfirmScannedBill = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!draftExpense) return;
-    if (!draftExpense.description.trim() || Number(draftExpense.amount) <= 0) {
+    const cleanedDescription = draftExpense.description.trim();
+    if (!cleanedDescription || Number(draftExpense.amount) <= 0) {
       setScanError('Please provide a valid description and amount before saving.');
       return;
     }
@@ -102,7 +120,7 @@ export default function Transactions() {
 
     try {
       const payload = {
-        merchant: draftExpense.description.trim(),
+        merchant: cleanedDescription,
         total_amount: Number(draftExpense.amount),
         date: draftExpense.date,
         category: draftExpense.category,
@@ -116,7 +134,7 @@ export default function Transactions() {
       });
       if (!saveRes.ok) throw new Error(`Save failed (${saveRes.status})`);
 
-      const nextEntry: ExpenseEntry = { id: crypto.randomUUID(), ...draftExpense, description: draftExpense.description.trim() };
+      const nextEntry: ExpenseEntry = { id: crypto.randomUUID(), ...draftExpense, description: cleanedDescription };
       const nextExpenses = [nextEntry, ...expenses];
       setExpenses(nextExpenses);
       saveExpenses(nextExpenses);
