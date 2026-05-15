@@ -2,6 +2,7 @@ import React, { useState, useEffect, type ReactElement } from 'react';
 import DonutChart from '../components/DonutChart';
 import { useWealthData } from '../hooks/useWealthData';
 import type { ExpenseEntry } from '../types/wealthTypes';
+import { API_BASE_URL } from '../config';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const EXPENSES_KEY = 'predx-finance-expenses';
@@ -36,16 +37,31 @@ const defaultForm = {
   description: '', category: 'other', amount: '', date: new Date().toISOString().split('T')[0], type: 'other' as ExpenseEntry['type'],
 };
 
+type ScannedBill = {
+  merchant: string;
+  total_amount: string;
+  date: string;
+  category: string;
+  type: ExpenseEntry['type'];
+};
+
 // ─── Component ─────────────────────────────────────────────────────────────────
 export default function Expenses() {
   const { myTrades, inrBalance, ALGO_TO_INR } = useWealthData();
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([]);
   const [form, setForm] = useState(defaultForm);
   const [showForm, setShowForm] = useState(false);
+  const [scanLoading, setScanLoading] = useState(false);
+  const [scanError, setScanError] = useState('');
+  const [scannedBill, setScannedBill] = useState<ScannedBill | null>(null);
+  const [scanFormError, setScanFormError] = useState('');
 
   useEffect(() => { setExpenses(loadExpenses()); }, []);
 
   const persist = (e: ExpenseEntry[]) => { setExpenses(e); saveExpenses(e); };
+  const updateScannedBill = <K extends keyof ScannedBill>(field: K, value: ScannedBill[K]) => {
+    setScannedBill(prev => (prev ? { ...prev, [field]: value } : prev));
+  };
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +77,68 @@ export default function Expenses() {
     persist([entry, ...expenses]);
     setForm(defaultForm);
     setShowForm(false);
+  };
+
+  const handleBillUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setScanError('');
+    setScanFormError('');
+    setScanLoading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/scan-bill`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.detail || 'Failed to scan bill');
+
+      const extracted = data?.data ?? {};
+      setScannedBill({
+        merchant: String(extracted.merchant || '').trim(),
+        total_amount: String(extracted.total_amount ?? ''),
+        date: String(extracted.date || new Date().toISOString().split('T')[0]),
+        category: String(extracted.category || 'other'),
+        type: 'other',
+      });
+      e.target.value = '';
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unable to scan bill';
+      setScanError(message);
+      setScannedBill(null);
+    } finally {
+      setScanLoading(false);
+    }
+  };
+
+  const handleConfirmScannedBill = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!scannedBill) return;
+    const amount = Number(scannedBill.total_amount);
+    if (!scannedBill.merchant.trim()) {
+      setScanFormError('Merchant is required before confirming.');
+      return;
+    }
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setScanFormError('Amount must be greater than 0.');
+      return;
+    }
+    setScanFormError('');
+
+    const entry: ExpenseEntry = {
+      id: crypto.randomUUID(),
+      description: scannedBill.merchant.trim(),
+      category: scannedBill.category.trim().toLowerCase() || 'other',
+      amount,
+      date: scannedBill.date || new Date().toISOString().split('T')[0],
+      type: scannedBill.type,
+    };
+    persist([entry, ...expenses]);
+    setScannedBill(null);
   };
 
   // Merge trade buy costs as expenses
@@ -126,6 +204,48 @@ export default function Expenses() {
         </div>
 
         {/* Add form */}
+        <div className="bg-[#161B22] border border-[#2A2F38] rounded-2xl p-6">
+          <h3 className="font-bold text-slate-100 mb-3">Scan Bill (OCR)</h3>
+          <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Upload Receipt Image</label>
+          <input type="file" accept="image/*" onChange={handleBillUpload} className={inputBase} />
+          {scanLoading && <p className="text-xs text-slate-400 mt-2">Scanning bill…</p>}
+          {scanError && <p className="text-xs text-[#EF4444] mt-2">{scanError}</p>}
+
+          {scannedBill && (
+            <form onSubmit={handleConfirmScannedBill} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              <div className="sm:col-span-2">
+                <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Merchant</label>
+                <input type="text" value={scannedBill.merchant} onChange={e => updateScannedBill('merchant', e.target.value)} className={inputBase} />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Amount (₹)</label>
+                <input type="number" min="0" step="0.01" value={scannedBill.total_amount} onChange={e => updateScannedBill('total_amount', e.target.value)} className={inputBase} />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Date</label>
+                <input type="date" value={scannedBill.date} onChange={e => updateScannedBill('date', e.target.value)} className={inputBase} />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Category</label>
+                <input type="text" value={scannedBill.category} onChange={e => updateScannedBill('category', e.target.value)} className={inputBase} />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Type</label>
+                <select value={scannedBill.type} onChange={e => updateScannedBill('type', e.target.value as ExpenseEntry['type'])} className={inputBase}>
+                  <option value="need">Need</option>
+                  <option value="want">Want</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div className="sm:col-span-2 flex gap-2">
+                <button type="submit" className="bg-[#2962FF] hover:bg-[#2255DD] text-white text-sm font-semibold px-5 py-2.5 rounded-xl">Confirm & Save</button>
+                <button type="button" onClick={() => setScannedBill(null)} className="bg-[#2A2F38] hover:bg-[#343B46] text-slate-200 text-sm font-semibold px-5 py-2.5 rounded-xl">Discard</button>
+              </div>
+              {scanFormError && <p className="sm:col-span-2 text-xs text-[#EF4444]">{scanFormError}</p>}
+            </form>
+          )}
+        </div>
+
         {showForm && (
           <div className="bg-[#161B22] border border-[#2A2F38] rounded-2xl p-6">
             <h3 className="font-bold text-slate-100 mb-4">Add Expense</h3>

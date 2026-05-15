@@ -1,10 +1,13 @@
 import os
 import io
 import csv
+import json
 import pickle
 import tempfile
 import uuid
 import socket
+import requests
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +22,8 @@ from safetensors.torch import load_file
 import ollama
 import google.generativeai as genai
 from dotenv import load_dotenv
+from PIL import Image
+import pytesseract
 
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -168,6 +173,125 @@ def sanitize_currency(text: str) -> str:
     text = _re.sub(r'INR\s+INR', 'INR', text)
     return text
 
+def _extract_first_json_object(text: str) -> dict:
+    if not text:
+        return {}
+    text = text.strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        text = text.replace("json\n", "", 1).strip()
+    try:
+        return json.loads(text)
+    except Exception:
+        pass
+    match = _re.search(r"\{[\s\S]*\}", text)
+    if not match:
+        return {}
+    try:
+        return json.loads(match.group(0))
+    except Exception:
+        return {}
+
+def _to_iso_date(date_text: str) -> str:
+    if not date_text:
+        return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    clean = str(date_text).strip()
+    patterns = [
+        "%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%d.%m.%Y",
+        "%m/%d/%Y", "%Y/%m/%d", "%d %b %Y", "%d %B %Y"
+    ]
+    for pattern in patterns:
+        try:
+            return datetime.strptime(clean, pattern).strftime("%Y-%m-%d")
+        except Exception:
+            continue
+    match = _re.search(r"(\d{4}-\d{2}-\d{2})", clean)
+    if match:
+        return match.group(1)
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+def _to_amount(value: Any) -> float:
+    if isinstance(value, (int, float)):
+        return float(value)
+    if value is None:
+        return 0.0
+    match = _re.search(r"\d+(?:,\d{3})*(?:\.\d+)?", str(value))
+    if not match:
+        return 0.0
+    try:
+        return float(match.group(0).replace(",", ""))
+    except Exception:
+        return 0.0
+
+def _fallback_bill_fields(ocr_text: str) -> Dict[str, Any]:
+    lines = [ln.strip() for ln in (ocr_text or "").splitlines() if ln.strip()]
+    merchant = lines[0] if lines else "Unknown Merchant"
+    amount_match = _re.search(r"(?:total|grand total|amount|amt)[^\d]{0,10}(\d+(?:,\d{3})*(?:\.\d+)?)", ocr_text or "", flags=_re.IGNORECASE)
+    amount = _to_amount(amount_match.group(1) if amount_match else 0)
+    date_match = _re.search(r"(\d{4}-\d{2}-\d{2}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+[A-Za-z]{3,9}\s+\d{2,4})", ocr_text or "")
+    date_val = _to_iso_date(date_match.group(1) if date_match else "")
+    return {
+        "merchant": merchant,
+        "total_amount": amount,
+        "date": date_val,
+        "category": "other",
+    }
+
+def _extract_bill_data_with_llm(ocr_text: str) -> Dict[str, Any]:
+    prompt = f"""You are an expense extraction engine.
+From the OCR receipt text below, extract these fields and return ONLY valid JSON:
+merchant (string), total_amount (number), date (YYYY-MM-DD string), category (string).
+
+If uncertain, use sensible defaults:
+- merchant: "Unknown Merchant"
+- total_amount: 0
+- date: today's date in YYYY-MM-DD
+- category: "other"
+
+OCR text:
+{ocr_text}
+"""
+    groq_key = os.getenv("GROQ_API_KEY")
+    if groq_key:
+        try:
+            model_name = os.getenv("GROQ_BILL_MODEL") or os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+            res = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {groq_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model_name,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.1,
+                },
+                timeout=30,
+            )
+            if res.ok:
+                payload = res.json() or {}
+                choices = payload.get("choices") or []
+                first_choice = choices[0] if choices else {}
+                message = first_choice.get("message") or {}
+                content = message.get("content", "")
+                parsed = _extract_first_json_object(content)
+                if parsed:
+                    return parsed
+        except Exception as e:
+            print(f"Groq OCR extraction failed: {e}")
+
+    try:
+        ollama_model = os.getenv("OLLAMA_BILL_MODEL", "llama3.2")
+        res = ollama.chat(model=ollama_model, messages=[{"role": "user", "content": prompt}])
+        content = (res.get("message") or {}).get("content", "")
+        parsed = _extract_first_json_object(content)
+        if parsed:
+            return parsed
+    except Exception as e:
+        print(f"Ollama OCR extraction failed: {e}")
+
+    return _fallback_bill_fields(ocr_text)
+
 # -------------------------------------------------------------
 # 3. ENDPOINTS
 # -------------------------------------------------------------
@@ -178,6 +302,40 @@ class PdfRequestPayload(BaseModel):
     category_totals: Dict[str, float]
     ai_summary: str
     transactions: List[Dict[str, Any]]
+
+@app.post("/api/v1/scan-bill")
+async def scan_bill(file: UploadFile = File(...)):
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Please upload a valid image file.")
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Empty file uploaded.")
+
+    try:
+        image = Image.open(io.BytesIO(content)).convert("RGB")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Unable to read image.")
+
+    ocr_text = (pytesseract.image_to_string(image) or "").strip()
+    if not ocr_text:
+        raise HTTPException(status_code=422, detail="No readable text found in image.")
+
+    extracted = _extract_bill_data_with_llm(ocr_text)
+    merchant = str(extracted.get("merchant") or "Unknown Merchant").strip() or "Unknown Merchant"
+    total_amount = _to_amount(extracted.get("total_amount", 0))
+    date = _to_iso_date(str(extracted.get("date") or ""))
+    category = str(extracted.get("category") or "other").strip().lower() or "other"
+
+    return {
+        "ocr_text": ocr_text,
+        "data": {
+            "merchant": merchant,
+            "total_amount": total_amount,
+            "date": date,
+            "category": category,
+        },
+    }
 
 @app.post("/api/upload-expenses")
 async def upload_expenses(file: UploadFile = File(...)):
