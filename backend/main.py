@@ -1,6 +1,7 @@
 import os
 import io
 import csv
+import json
 import pickle
 import tempfile
 import uuid
@@ -18,7 +19,9 @@ from safetensors.torch import load_file
 
 import ollama
 import google.generativeai as genai
+import pytesseract
 from dotenv import load_dotenv
+from PIL import Image
 
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -178,6 +181,82 @@ class PdfRequestPayload(BaseModel):
     category_totals: Dict[str, float]
     ai_summary: str
     transactions: List[Dict[str, Any]]
+
+def parse_receipt_llm_output(raw_output: str) -> Dict[str, Any]:
+    text = (raw_output or "").strip()
+    if text.startswith("```"):
+        text = _re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=_re.IGNORECASE | _re.DOTALL).strip()
+    try:
+        return json.loads(text)
+    except Exception:
+        match = _re.search(r"\{.*?\}", text, flags=_re.DOTALL)
+        if match:
+            try:
+                return json.loads(match.group(0))
+            except Exception:
+                pass
+    return {}
+
+def extract_receipt_fields_with_llm(raw_text: str) -> Dict[str, Any]:
+    prompt = f"""You are a receipt parser.
+Extract values from OCR text and return ONLY a valid JSON object with exactly these keys:
+- merchant (string)
+- total_amount (number or null)
+- date (YYYY-MM-DD string or null)
+- category (string)
+
+If a field is not found, return null for that field.
+Do not include markdown or any extra text.
+
+OCR text:
+{raw_text}
+"""
+    try:
+        if GEMINI_API_KEY:
+            model_gemini = genai.GenerativeModel("models/gemini-2.5-flash")
+            response = model_gemini.generate_content(prompt)
+            parsed = parse_receipt_llm_output(response.text)
+        else:
+            res = ollama.chat(model="llama3.2", messages=[{"role": "user", "content": prompt}])
+            parsed = parse_receipt_llm_output(res["message"]["content"])
+    except Exception as e:
+        print(f"Receipt LLM extraction error: {e}")
+        parsed = {}
+
+    return {
+        "merchant": parsed.get("merchant"),
+        "total_amount": parsed.get("total_amount"),
+        "date": parsed.get("date"),
+        "category": parsed.get("category"),
+    }
+
+@app.post("/api/v1/scan-bill")
+async def scan_bill(file: UploadFile = File(...)):
+    if file.content_type and not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image uploads are supported.")
+    image_bytes = await file.read()
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+    try:
+        image = Image.open(io.BytesIO(image_bytes))
+        image.verify()
+        # Pillow closes parser state after verify(), so reopen for OCR processing.
+        image = Image.open(io.BytesIO(image_bytes))
+        if (image.format or "").upper() not in {"PNG", "JPEG", "WEBP", "BMP", "TIFF"}:
+            raise HTTPException(status_code=400, detail="Unsupported image format.")
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid image file.")
+    try:
+        raw_text = pytesseract.image_to_string(image.convert("RGB")).strip()
+    except pytesseract.TesseractNotFoundError:
+        raise HTTPException(status_code=500, detail="Tesseract OCR executable not found. Ensure Tesseract is installed and in PATH.")
+    except pytesseract.TesseractError:
+        raise HTTPException(status_code=500, detail="OCR processing failed for the uploaded image.")
+
+    extracted = extract_receipt_fields_with_llm(raw_text)
+    return {"raw_text": raw_text, "extracted": extracted}
 
 @app.post("/api/upload-expenses")
 async def upload_expenses(file: UploadFile = File(...)):
