@@ -251,7 +251,7 @@ async def scan_bill(file: UploadFile = File(...)):
     try:
         raw_text = pytesseract.image_to_string(image.convert("RGB")).strip()
     except pytesseract.TesseractNotFoundError:
-        raise HTTPException(status_code=500, detail="Tesseract OCR is not installed on the server.")
+        raise HTTPException(status_code=500, detail="Tesseract OCR executable not found. Ensure Tesseract is installed and in PATH.")
 
     extracted = extract_receipt_fields_with_llm(raw_text)
     return {"raw_text": raw_text, "extracted": extracted}
