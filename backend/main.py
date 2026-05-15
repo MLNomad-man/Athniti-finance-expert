@@ -189,7 +189,7 @@ def parse_receipt_llm_output(raw_output: str) -> Dict[str, Any]:
     try:
         return json.loads(text)
     except Exception:
-        match = _re.search(r"\{.*\}", text, flags=_re.DOTALL)
+        match = _re.search(r"\{.*?\}", text, flags=_re.DOTALL)
         if match:
             try:
                 return json.loads(match.group(0))
@@ -238,10 +238,16 @@ async def scan_bill(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
     try:
         image = Image.open(io.BytesIO(image_bytes))
+        image.verify()
+        image = Image.open(io.BytesIO(image_bytes))
+        if (image.format or "").upper() not in {"PNG", "JPEG", "JPG", "WEBP", "BMP", "TIFF"}:
+            raise HTTPException(status_code=400, detail="Unsupported image format.")
+    except HTTPException:
+        raise
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid image file.")
     try:
-        raw_text = pytesseract.image_to_string(image).strip()
+        raw_text = pytesseract.image_to_string(image.convert("RGB")).strip()
     except pytesseract.TesseractNotFoundError:
         raise HTTPException(status_code=500, detail="Tesseract OCR is not installed on the server.")
 
