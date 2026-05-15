@@ -219,7 +219,8 @@ OCR text:
         else:
             res = ollama.chat(model="llama3.2", messages=[{"role": "user", "content": prompt}])
             parsed = parse_receipt_llm_output(res["message"]["content"])
-    except Exception:
+    except Exception as e:
+        print(f"Receipt LLM extraction error: {e}")
         parsed = {}
 
     return {
@@ -239,6 +240,7 @@ async def scan_bill(file: UploadFile = File(...)):
     try:
         image = Image.open(io.BytesIO(image_bytes))
         image.verify()
+        # Pillow closes parser state after verify(), so reopen for OCR processing.
         image = Image.open(io.BytesIO(image_bytes))
         if (image.format or "").upper() not in {"PNG", "JPEG", "JPG", "WEBP", "BMP", "TIFF"}:
             raise HTTPException(status_code=400, detail="Unsupported image format.")
