@@ -59,6 +59,9 @@ export default function Expenses() {
   useEffect(() => { setExpenses(loadExpenses()); }, []);
 
   const persist = (e: ExpenseEntry[]) => { setExpenses(e); saveExpenses(e); };
+  const updateScannedBill = <K extends keyof ScannedBill>(field: K, value: ScannedBill[K]) => {
+    setScannedBill(prev => (prev ? { ...prev, [field]: value } : prev));
+  };
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -212,23 +215,23 @@ export default function Expenses() {
             <form onSubmit={handleConfirmScannedBill} className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               <div className="sm:col-span-2">
                 <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Merchant</label>
-                <input type="text" value={scannedBill.merchant} onChange={e => setScannedBill({ ...scannedBill, merchant: e.target.value })} className={inputBase} />
+                <input type="text" value={scannedBill.merchant} onChange={e => updateScannedBill('merchant', e.target.value)} className={inputBase} />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Amount (₹)</label>
-                <input type="number" min="0" step="0.01" value={scannedBill.total_amount} onChange={e => setScannedBill({ ...scannedBill, total_amount: e.target.value })} className={inputBase} />
+                <input type="number" min="0" step="0.01" value={scannedBill.total_amount} onChange={e => updateScannedBill('total_amount', e.target.value)} className={inputBase} />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Date</label>
-                <input type="date" value={scannedBill.date} onChange={e => setScannedBill({ ...scannedBill, date: e.target.value })} className={inputBase} />
+                <input type="date" value={scannedBill.date} onChange={e => updateScannedBill('date', e.target.value)} className={inputBase} />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Category</label>
-                <input type="text" value={scannedBill.category} onChange={e => setScannedBill({ ...scannedBill, category: e.target.value })} className={inputBase} />
+                <input type="text" value={scannedBill.category} onChange={e => updateScannedBill('category', e.target.value)} className={inputBase} />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 uppercase tracking-wider mb-1.5">Type</label>
-                <select value={scannedBill.type} onChange={e => setScannedBill({ ...scannedBill, type: e.target.value as ExpenseEntry['type'] })} className={inputBase}>
+                <select value={scannedBill.type} onChange={e => updateScannedBill('type', e.target.value as ExpenseEntry['type'])} className={inputBase}>
                   <option value="need">Need</option>
                   <option value="want">Want</option>
                   <option value="other">Other</option>

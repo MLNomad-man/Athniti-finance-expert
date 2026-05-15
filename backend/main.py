@@ -269,7 +269,11 @@ OCR text:
                 timeout=30,
             )
             if res.ok:
-                content = (((res.json() or {}).get("choices") or [{}])[0].get("message") or {}).get("content", "")
+                payload = res.json() or {}
+                choices = payload.get("choices") or []
+                first_choice = choices[0] if choices else {}
+                message = first_choice.get("message") or {}
+                content = message.get("content", "")
                 parsed = _extract_first_json_object(content)
                 if parsed:
                     return parsed
