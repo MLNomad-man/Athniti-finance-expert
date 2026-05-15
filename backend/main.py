@@ -242,7 +242,7 @@ async def scan_bill(file: UploadFile = File(...)):
         image.verify()
         # Pillow closes parser state after verify(), so reopen for OCR processing.
         image = Image.open(io.BytesIO(image_bytes))
-        if (image.format or "").upper() not in {"PNG", "JPEG", "JPG", "WEBP", "BMP", "TIFF"}:
+        if (image.format or "").upper() not in {"PNG", "JPEG", "WEBP", "BMP", "TIFF"}:
             raise HTTPException(status_code=400, detail="Unsupported image format.")
     except HTTPException:
         raise
@@ -252,6 +252,8 @@ async def scan_bill(file: UploadFile = File(...)):
         raw_text = pytesseract.image_to_string(image.convert("RGB")).strip()
     except pytesseract.TesseractNotFoundError:
         raise HTTPException(status_code=500, detail="Tesseract OCR executable not found. Ensure Tesseract is installed and in PATH.")
+    except pytesseract.TesseractError:
+        raise HTTPException(status_code=500, detail="OCR processing failed for the uploaded image.")
 
     extracted = extract_receipt_fields_with_llm(raw_text)
     return {"raw_text": raw_text, "extracted": extracted}
